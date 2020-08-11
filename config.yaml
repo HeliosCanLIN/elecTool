@@ -1,2 +1,13 @@
-path : E:\Work\ #缴费资料的文件夹的路径
-letterPath : E:\Work\0759\QT-004-关于商请湛江移动确认共享基站2020年7月电费分摊比例的函.zip #分摊比例函文件夹
+#配置文件修改方法: 配置 : 参数    :符号前后要有一个空格 示例: path : E:\Work\
+path :  #缴费资料的文件夹的路径需要在路径后面加一个\号 eg:E:\Work\
+letterPath :  #分摊比例函文件夹 eg:E:\Work\0759\QT-004-关于商请湛江移动确认共享基站2020年7月电费分摊比例的函.zip
+
+#1号用户
+userName1 : 
+user1 : 
+password1 : 
+
+#2号用户
+userName2 : 
+user2 : 
+password2 : 
