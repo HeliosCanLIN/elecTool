@@ -169,16 +169,16 @@ def login(user): #自动输入账号密码
         "/html/body/div[3]/div/div[2]/form/div[1]/div[3]/div[3]/div/div[6]/div[3]/span[1]")
     ActionChains(browser).move_to_element(element).perform()
     element.click()  # 选择区域
-    if user=="梁湛波":
+    if user==userName1:
         element = browser.find_element_by_xpath("/html/body/div[3]/div/div[2]/form/div[1]/div[1]/input")
-        element.send_keys("liangzhanbo")
+        element.send_keys(user1)
         element = browser.find_element_by_xpath("/html/body/div[3]/div/div[2]/form/div[2]/div/input[1]")
-        element.send_keys("12A34X56")
-    if user=="刘以鹏":
+        element.send_keys(password1)
+    if user==userName2:
         element = browser.find_element_by_xpath("/html/body/div[3]/div/div[2]/form/div[1]/div[1]/input")
-        element.send_keys("liuyipeng")
+        element.send_keys(user2)
         element = browser.find_element_by_xpath("/html/body/div[3]/div/div[2]/form/div[2]/div/input[1]")
-        element.send_keys("LYPeng10086!")
+        element.send_keys(password2)
     time.sleep(10)  # 有10秒的时间输入验证码
     element = browser.find_element_by_xpath("/html/body/div[3]/div/div[2]/form/div[5]/div/button")
     ActionChains(browser).move_to_element(element).perform()
@@ -279,10 +279,23 @@ def elecAccountImport(index): #导入电费时的网页操作函数
     element.click() #导入完成后点击完成按钮
     print(index-9+1)
 
-if __name__ == '__main__':
+def readConfig():
+    global path,letterPath,userName1,user1,password1,userName2,user2,password2
     config = get_yaml_data('config.yaml')
-    path=config['path']
+    path = config['path']
     letterPath = config['letterPath']
+
+    userName1 = config['userName1']
+    user1 = config['user1']
+    password1 = config['password1']
+
+    userName2 = config['userName2']
+    user2 = config['user2']
+    password2 = config['password2']
+
+
+
+if __name__ == '__main__':
     options = webdriver.ChromeOptions()
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
     browser = webdriver.Chrome(options=options)
@@ -331,12 +344,12 @@ if __name__ == '__main__':
             print("导入完成!")
             browser.close()
         if userInput == "2":
-            chooseUser = input("梁湛波-(1) 刘以鹏-(2) 返回-(0)\n")
+            chooseUser = input(userName1+"-(1) "+userName2+"-(2) 返回-(0)\n")
             print("有10秒的时间输入验证码,输入后不要操作任何按钮,10秒后自动登录")
             if chooseUser=="1":
-                login("梁湛波")
+                login(userName1)
             if chooseUser == "2":
-                login("刘以鹏")
+                login(userName2)
             if chooseUser == "0":
                 continue
             dictCookies = browser.get_cookies()
