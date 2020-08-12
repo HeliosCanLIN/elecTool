@@ -11,7 +11,8 @@ import json
 import sys
 import yaml
 
-version = "v0.7.1-beta"
+version = "v0.7.3-beta"
+versionNum = "070202(0812.2)"
 
 def get_yaml_data(yaml_file): #读取配置文件
     # 打开yaml文件
@@ -19,15 +20,7 @@ def get_yaml_data(yaml_file): #读取配置文件
     file = open(yaml_file, 'r', encoding="utf-8")
     file_data = file.read()
     file.close()
-
-    #print(file_data)
-    #print("类型：", type(file_data))
-
-    # 将字符串转化为字典或列表
-    #print("***转化yaml数据为字典或列表***")
     data = yaml.safe_load(file_data)
-    #print(data)
-    #print("类型：", type(data))
     return data
 
 def new_round(_float, _len): #重写的四舍五入功能
@@ -86,7 +79,7 @@ def UpLoad_File(webEle, filePath): #非ipunt标签的上传附件功能
 
 def checkData(): #检查当前录入缴费的所需要的资料
     global period
-    e_xlsx = load_workbook(path+"非平峰谷电费缴费导入模板.xlsx")
+    e_xlsx = load_workbook(path+"非平峰谷电费缴费导入模板(软件用).xlsx")
     s1 = e_xlsx['非平峰谷']
     meter = s1['F2']
     percent = s1['H2']
@@ -115,12 +108,6 @@ def checkData(): #检查当前录入缴费的所需要的资料
             periodMonth="01"
         else:
             period = str(list[0])+str(int(list[1])+1).zfill(2)
-        """
-        if dateStr.value[3:5]=="12":
-            period=202001
-        else:
-            period =str(dateStr.value[6:10])+str(int(dateStr.value[3:5])+1).zfill(2)
-        """
     print(period)
     #print(periodYear)
     #print(periodMonth)
@@ -219,7 +206,7 @@ def Import(): #批量导入功能的的主函数
                 data = datadate.strftime("%Y-%#m-%#d") #去除日期前导0
                 #data = cell.value.strftime("%#d/%#m/%Y") #涉及日期的处理 python的智能对象会识别为时间对象,这是转换成日期输出为yyyy-mm-dd的格式
             elif cell.value == None:
-                data = " "
+                data =' '
             else:
                 data = cell.value  #空值None会被当成"None"字符串输出,这里把None转换成一个空字符
 
@@ -231,8 +218,11 @@ def Import(): #批量导入功能的的主函数
             """
 
             templateSheet[str(get_column_letter(j)) + '2'].value = str(data) #写入导入模板的第二行
-        template.save(path+"非平峰谷电费缴费导入模板.xlsx") #保存
-        elecAccountImport(index) #导入电费
+        template.save(path+"非平峰谷电费缴费导入模板(软件用).xlsx") #保存
+        try:
+            elecAccountImport(index)  # 导入电费
+        except:
+            print("尝试导入缴费失败")
         index+=1 #每次导入电费后,每一次网页的提示元素都会往新增一个div标签来显示提示框,这里index值将传入下一次导入电费时候检索状态元素使用的Xpath路径
 
 def elecAccountImport(index): #导入电费时的网页操作函数
@@ -243,30 +233,29 @@ def elecAccountImport(index): #导入电费时的网页操作函数
     time.sleep(0.5)
 
     # 定位上传按钮，添加本地文件
-    browser.find_element_by_xpath("/html/body/div[4]/div/div/div[2]/form/div/div/input[1]").send_keys(path+"非平峰谷电费缴费导入模板.xlsx")
+    browser.find_element_by_xpath("/html/body/div[4]/div/div/div[2]/form/div/div/input[1]").send_keys(path+"非平峰谷电费缴费导入模板(软件用).xlsx")
     time.sleep(0.5) #上传模板
 
     f1 = browser.find_element_by_xpath("/html/body/div[4]/div/div/div[2]/div/ul[1]/li/div[2]/a")
     UpLoad_File(f1,file) #非input标签上传文件 #上传附件
-    time.sleep(0.5)
+    time.sleep(1)
     element = browser.find_element_by_xpath("/html/body/div[7]/div/div/div[3]/a")
     ActionChains(browser).move_to_element(element).perform()
     element.click()
-    time.sleep(0.5)
     if int(period) <= 201901:
         f1 = browser.find_element_by_xpath("/html/body/div[4]/div/div/div[2]/div/ul[1]/li/div[2]/a")
         UpLoad_File(f1, billPath)  # 非input标签上传文件 #上传附件
-        time.sleep(0.5)
+        time.sleep(1)
         element = browser.find_element_by_xpath("/html/body/div[7]/div/div/div[3]/a")
         ActionChains(browser).move_to_element(element).perform()
         element.click()
+    time.sleep(1)
     element = browser.find_element_by_xpath("/html/body/div[4]/div/div/div[3]/a[2]")
     ActionChains(browser).move_to_element(element).perform()
     element.click()
     time.sleep(0.5)
-    flag1 = 1
 
-    while (flag1):
+    while 1:
         try:
             text = browser.find_element_by_xpath("/html/body/div[" + str(index) + "]/div/div/div[2]").text
             print(text)
@@ -293,34 +282,37 @@ def readConfig():
     user2 = config['user2']
     password2 = config['password2']
 
-
-
 if __name__ == '__main__':
+    try:
+        readConfig()
+    except:
+        print("读取配置文件失败")
     options = webdriver.ChromeOptions()
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
     browser = webdriver.Chrome(options=options)
-    #browser = webdriver.Chrome()
+    # browser = webdriver.Chrome()
     url = 'http://10.217.240.219:8090/NCMS/welcome'
     # 初次建立连接，随后方可修改cookie
     browser.get(url)
     # 删除第一次建立连接时的cooki
     browser.delete_all_cookies()
     # 读取登录时存储到本地的cookie
-    with open('cookies.json', 'r', encoding='utf-8') as f:
-        listCookies = json.loads(f.read())
-    for cookie in listCookies:
-        browser.add_cookie({
-            'domain': '10.217.240.219',  # 此处xxx.com前，需要带点
-            'name': cookie['name'],
-            'value': cookie['value'],
-            'path': '/',
-            'expires': None
-        })
+    try:
+        with open('cookies.json', 'r', encoding='utf-8') as f:
+            listCookies = json.loads(f.read())
+        for cookie in listCookies:
+            browser.add_cookie({
+                'domain': '10.217.240.219',  # 此处xxx.com前，需要带点
+                'name': cookie['name'],
+                'value': cookie['value'],
+                'path': '/',
+                'expires': None
+            })
+        browser.get(url)
+    except:
+        browser.get(url)
     # 再次访问页面，便可实现免登陆访问
-    browser.get(url)
-
-    flag = 1
-    while(flag):
+    while 1:
         print("(1) - 直供电电费导入(在出账工具出账后使用,使用时需要关闭出账工具和模板)")
         print("(2) - 登录,获取cookie(登录后使用,获取后当天有效无需再登录)")
         print("(3) - 报账点批量启用-(不可靠)")
@@ -334,10 +326,13 @@ if __name__ == '__main__':
             browser.execute_script(js)
             page = browser.window_handles
             browser.switch_to_window(page[1])  # 切换至缴费页面
-            tool = load_workbook(path+"三家运营商代垫电费出账工具V35V1-20200803（更新电表在用运营商）.xlsm")
-            template = load_workbook(path+"非平峰谷电费缴费导入模板.xlsx")
-            toolSheet = tool['新版导入表']
-            templateSheet = template['非平峰谷']
+            try:
+                tool = load_workbook(path+"三家运营商代垫电费出账工具V35V1-20200803（更新电表在用运营商）.xlsm")
+                template = load_workbook(path+"非平峰谷电费缴费导入模板(软件用).xlsx")
+                toolSheet = tool['新版导入表']
+                templateSheet = template['非平峰谷']
+            except:
+                print("文档被占用,请解除占用后使用")
             Import()
             tool.close()
             template.close()
@@ -433,6 +428,6 @@ if __name__ == '__main__':
                     print(s2['C' + cell.coordinate[1:]].value)
         if userInput == "V" or userInput == "v":
             print(version)
+    browser.switch_to_window(page[0])
     browser.close()
     sys.exit(0)
-
