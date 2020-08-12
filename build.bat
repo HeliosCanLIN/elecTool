@@ -1,0 +1,1 @@
+pyinstaller -p "C:\Program Files\Python38\Lib\site-packages" -F main.py
