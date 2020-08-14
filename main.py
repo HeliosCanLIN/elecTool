@@ -10,9 +10,13 @@ import time
 import json
 import sys
 import yaml
+import requests
+import re
+from bs4 import BeautifulSoup
+import queue
 
-version = "v0.7.3-beta"
-versionNum = "070202(0812.2)"
+version = "v0.8.0-beta"
+versionNum = "0814.1"
 
 def get_yaml_data(yaml_file): #读取配置文件
     # 打开yaml文件
@@ -219,10 +223,9 @@ def Import(): #批量导入功能的的主函数
 
             templateSheet[str(get_column_letter(j)) + '2'].value = str(data) #写入导入模板的第二行
         template.save(path+"非平峰谷电费缴费导入模板(软件用).xlsx") #保存
-        try:
-            elecAccountImport(index)  # 导入电费
-        except:
-            print("尝试导入缴费失败")
+
+        elecAccountImport(index)  # 导入电费
+
         index+=1 #每次导入电费后,每一次网页的提示元素都会往新增一个div标签来显示提示框,这里index值将传入下一次导入电费时候检索状态元素使用的Xpath路径
 
 def elecAccountImport(index): #导入电费时的网页操作函数
@@ -317,6 +320,7 @@ if __name__ == '__main__':
         print("(2) - 登录,获取cookie(登录后使用,获取后当天有效无需再登录)")
         print("(3) - 报账点批量启用-(不可靠)")
         print("(4) - 超标备注(alpha)")
+        print("(5) - 爬取标杆(beta)")
         print("(0) - 退出")
         userInput = input("输入数字选择功能\n>>>");
         if userInput == "0":
@@ -426,6 +430,72 @@ if __name__ == '__main__':
                 j += 1
                 if str(cell.value) == test:
                     print(s2['C' + cell.coordinate[1:]].value)
+
+        if userInput == "5":
+            xlsx1 = load_workbook(path + "标杆数据.xlsx")
+            s1 = xlsx1['Sheet1']
+            col1=s1['A']
+            q = queue.Queue()
+            url1 = "http://10.217.240.219:8090/NCMS/asserts/tpl/selfelec/payment/showBenchmark" # 接口地址
+            #js = "window.open('http://10.217.240.219:8090/NCMS/asserts/tpl/selfelec/payment_finance/manage.html?formData=%7B%22billamountDateOpen%22:%222020-08-13%22%7D')"
+            js = "window.open('http://10.217.240.219:8090/NCMS/asserts/tpl/selfelec/payment_finance/manage.html')"
+            browser.execute_script(js)
+            time.sleep(0.5)
+            page = browser.window_handles
+            browser.switch_to_window(page[1])  # 切换至缴费页面
+            time.sleep(1)
+            user = input("请调整好爬取的页面,按1继续\n>>>");
+            if user=="1":
+                i = 1
+                for link in browser.find_elements_by_xpath("//tbody//*[@href]"):  # 此循环请求速度极快 有被服务器ban掉的可能
+                    # print(link.get_attribute('href'))
+                    accountLink = link.get_attribute('href')
+                    accountId = re.findall(r"billaccountpaymentdetailId=(.+?)&", accountLink, flags=0)
+                    # print(str(accountId[0]))
+                    # 消息头数据
+                    headers = {
+                        'Connection': 'keep-alive',
+                        'Content-Length': '59',
+                        'Accept': '*/*',
+                        'DNT': '1',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36',
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'Origin': 'http://10.217.240.219:8090',
+                        'Referer': accountLink,
+                        'Accept-Encoding': 'gzip, deflate',
+                        'Accept-Language': 'zh-CN,zh;q=0.9',
+                        'Cookie': 'SESSION=4f24766f-7be6-48ee-9dc5-04318fd6b9c1; /NCMS/welcomecuNum=1; prvCode=GD; ifShow=false; UM_distinctid=173e5f3600a58b-075ec3bf36861e-3323767-1fa400-173e5f3600b7f3; CNZZDATA155540=cnzz_eid%3D1059811877-1597288610-%26ntime%3D1597288610',
+
+                    }
+                    # 消息数据
+                    data = {'billaccountpaymentdetailId': accountId[0]}
+
+                    r = requests.post(url1, headers=headers, data=data, verify=False)  # 发送POST请求标杆
+                    packet = r.json()  # 获取回复
+                    html = packet['obj']  # 提取html
+
+                    soup = BeautifulSoup(html, 'html.parser')  # 将html实例化为BeautifulSoup对象
+                    for item in soup.find_all("td"):  # 遍历html提取table
+                        benchmark = re.sub('\s', ' ', item.get_text())  # 去除html标签
+                        print(benchmark)
+                        q.put(benchmark)  # 数值推入队列
+                    account = browser.find_element_by_xpath(
+                        "/html/body/div[4]/div[2]/div[2]/table/tbody/tr[" + str(i) + "]/td[7]").text  # 获取缴费单号
+                    print(account)
+                    k = 1
+                    for k in range((i * 5 - 4), (i * 5 + 1)):  # 遍历列
+                        k += 1
+                        s1['E' + str(k)].value = str(account)
+                        row = s1[str(k)]
+                        j = 0
+                        for cell in row:  # 遍历行
+                            j += 1
+                            if j == 5:
+                                break
+                            cell.value = q.get()
+                    i += 1
+                xlsx1.save(path + "标杆数据.xlsx")
         if userInput == "V" or userInput == "v":
             print(version)
     browser.switch_to_window(page[0])
