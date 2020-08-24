@@ -15,8 +15,8 @@ import re #正则表达式
 from bs4 import BeautifulSoup #处理html
 import queue #队列
 
-version = "v0.8.2-beta"
-versionNum = "0821.1"
+version = "v0.8.3-beta"
+versionNum = "0824.2"
 
 def get_yaml_data(yaml_file): #读取配置文件
     # 打开yaml文件
@@ -423,6 +423,96 @@ def histoicFlowTime():
             dataMax=len(dict_info)
             print(eval(str(dict_info[dataMax-2]))['comment'])
 
+def BillaccountPaymentInfo():
+    url1 = "http://10.217.240.219:8090/NCMS/asserts/tpl/selfelec/payment/queryVEleBillaccountPaymentInfo"  # 接口地址
+    # 消息头数据
+    headers = {
+        'Connection': 'keep-alive',
+        'Content-Length': '297',
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'DNT': '1',
+        'X-Requested-With': 'XMLHttpRequest',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Origin': 'http://10.217.240.219:8090',
+        'Referer': 'http://10.217.240.219:8090/NCMS/asserts/tpl/selfelec/payment_finance/manage.html',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Cookie': '/NCMS/welcomecuNum=1; SESSION=' + cookie['value'],
+    }
+    # 消息数据
+    data = {
+        'pageNumber': '1',  # 页码 (暂时没找到获取有多少页的接口)
+        'pageSize': '10',  # 每页显示多少条记录 (10 25 50 100 500)
+        'billaccountCode': '',  # 报账点编码
+        'billaccountName': '',  # 报账点名称
+        'paymentCode': '',  # 缴费单编码
+        'pregId': '',  # 地市 湛江=36b7ee0a05d04884b332effa938fc682 此字符串采用MD5加密需要暴力穷举解密
+        'regId': '',
+        # 区县 徐闻=15dfd3edcd61487793ccf54e0cabf13b 霞山=1cb22e96e86e462d91fa369581fd602b 遂溪=2e36821772684b95a93a34a1921c3816 开发区=49a83c48cd794270baa78f2b311fc804 坡头=70b4bb88dc6c4fc9bc32b5cceee43207 吴川=99a7b6b3efd348c8afca9f4e40d4219a 雷州=e6cf859af33547338281d710a623dabb 赤坎=f8707152932f4186b322bcf89523ab94 麻章=fa0c8d2af1474accaf022465376152a6 廉江=fbdc86b3ae0d4916afb5f031f1e74de8
+        'auditingState': '',  # 审批状态 审核通过=0 审核未通过=8 审核中=9 未提交=-1
+        'supplyMethod': '',  # 供电方式 直供电=1 转供电=2
+        'billaccountType': '2',  # 报账点类型自维报账点=1 铁塔电费报账点=2 代持报账点=3
+        'startdateOpen': '',  # 缴费期始 YYYY-MM-DD
+        'startdateClose': '',  # 缴费期始 YYYY-MM-DD
+        'enddateOpen': '',  # 缴费期终 YYYY-MM-DD
+        'enddateClose': '',  # 缴费期终 YYYY-MM-DD
+        'userCodeOrName': '',  # 录入人 梁湛波=%E6%A2%81%E6%B9%9B%E6%B3%A2  此字符串采用URL UTF-8编码 可自行解码
+        'billamountDateOpen': '',  # 缴费申请日期 YYYY-MM-DD
+        'billamountDateClose': '',  # 缴费申请日期 YYYY-MM-DD
+        'overflow': '',  # 是否超标 不超标=0 超标=1
+        'isFinance': '1',  # 不太清楚这个选项有什么用
+        'billamountState': '',  # 推送状态
+        'dateSort': '1',  # 排列方式 缴费申请日期从新到旧=1 缴费申请日期从旧到新=2 缴费期始从新到旧=3 缴费期始从旧到新=4 缴费期终从新到旧=5 缴费期终从旧到新=6
+    }
+
+    r = requests.post(url1, headers=headers, data=data, verify=False)  # 发送POST请求标杆
+    packet = r.json()  # 获取回复
+    obj = str(packet['obj'])
+    str_info = obj.strip('[]')
+    dict_info = eval(str_info)
+    str_info=str(dict_info['list'])
+    billList = eval(str_info.strip('[]'))
+    billInfo=eval(str(billList[0]))
+    print(billInfo)
+    print(billInfo['paymentdetailNote'])
+
+def ElectricmeterInfoDetail():
+    url1 = "http://10.217.240.219:8090/NCMS/asserts/tpl/selfelec/payment/queryElectricmeterInfoDetail"  # 接口地址
+    # 消息头数据
+    headers = {
+        'Connection': 'keep-alive',
+        'Content-Length': '297',
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'DNT': '1',
+        'X-Requested-With': 'XMLHttpRequest',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Origin': 'http://10.217.240.219:8090',
+        'Referer': 'http://10.217.240.219:8090/NCMS/asserts/tpl/selfelec/payment_finance/manage.html',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Cookie': '/NCMS/welcomecuNum=1; SESSION=' + cookie['value'],
+    }
+    # 消息数据
+    data = {
+        'billaccountpaymentdetailId':'869e1e6ac4a540678c108c07da01c867',
+        'isFinance': '1'
+    }
+
+    r = requests.post(url1, headers=headers, data=data, verify=False)  # 发送POST请求标杆
+    packet = r.json()  # 获取回复
+    obj = str(packet['obj'])
+    str_info = obj.strip('[]')
+    dict_info = eval(str_info)
+    billInfo=eval(str(dict_info['contract']))
+    otherCost = eval(str(billInfo['otherCost']).strip('[]'))
+    meterInfo=eval(str(dict_info['meterlist']).strip('[]'))
+    #resourceInfo = eval(str(dict_info['resourceList']).strip('[]'))
+    print(billInfo)#缴费明细
+    print(otherCost)#其他费用
+    print(meterInfo)#电表缴费明细
+    #print(resourceInfo)
 
 if __name__ == '__main__':
     try:
@@ -461,6 +551,8 @@ if __name__ == '__main__':
         print("(4) - 超标备注(不可靠)")
         print("(5) - 爬取标杆(beta)")
         print("(6) - 爬取审核信息(beta)")
+        print("(7) - 爬取电费列表(beta)")
+        print("(8) - 爬取电费明细(beta)")
         print("(0) - 退出")
         userInput = input("输入数字选择功能\n>>>");
         if userInput == "0":
@@ -574,6 +666,10 @@ if __name__ == '__main__':
             benchmark()
         if userInput == '6':
             histoicFlowTime()
+        if userInput == '7':
+            BillaccountPaymentInfo()
+        if userInput == '8':
+            ElectricmeterInfoDetail()
         if userInput == "V" or userInput == "v":
             print(version)
     browser.switch_to_window(page[0])
