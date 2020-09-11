@@ -14,9 +14,12 @@ import requests #发送报文请求
 import re #正则表达式
 from bs4 import BeautifulSoup #处理html
 import queue #队列
+from selenium.webdriver.common.by import By
 
-version = "v0.8.3-beta"
-versionNum = "0824.2"
+version = "v0.8.4-beta"
+versionNum = "0911.1"
+
+global error
 
 def get_yaml_data(yaml_file): #读取配置文件
     # 打开yaml文件
@@ -127,18 +130,12 @@ def checkData(): #检查当前录入缴费的所需要的资料
     i = 0
     for cell in col:
         i += 1
-        """
         if cell.value==meter.value and str(sht['E'+cell.coordinate[1:]].value)==str(period):
             regionLocat = 'A' + cell.coordinate[1:]
             billNo = 'D' + cell.coordinate[1:]
             billDate = 'E' + cell.coordinate[1:]
             break
-        """
-        if cell.value==meter.value :
-            regionLocat = 'A' + cell.coordinate[1:]
-            billNo = 'D' + cell.coordinate[1:]
-            billDate = 'E' + cell.coordinate[1:]
-            break
+
 
     region = sht[regionLocat] #获取报账点区域
     Date = sht[billDate]
@@ -205,11 +202,11 @@ def Import(): #批量导入功能的的主函数
         j = 0
         for cell in row: #遍历行
             j += 1
-            if j==column_index_from_string('AD') or j==column_index_from_string('AE')or j==column_index_from_string('AY')or j==column_index_from_string('BA')or j==column_index_from_string('BB')or j==column_index_from_string('BH')or j==column_index_from_string('BJ')or j==column_index_from_string('BK'):
+            if j==column_index_from_string('AD') or j==column_index_from_string('AE')or j==column_index_from_string('AG')or j==column_index_from_string('AH')or j==column_index_from_string('AY')or j==column_index_from_string('BA')or j==column_index_from_string('BB')or j==column_index_from_string('BH')or j==column_index_from_string('BJ')or j==column_index_from_string('BK'):
                 if cell.value == None:
                     data =" "
                 else:
-                    data = new_round(cell.value, 2) #可能因为出账工具的bug,某些时候获取金额到时候可能会出现一堆小数,此功能会自动四舍五入
+                    data = new_round(cell.value, 2) #可能因为出账工具的bug,某些时候获取金额到时候可能会出现一堆小数,此功能会自动四舍五入H
             elif type(cell.value) == datetime.datetime:
 
                 year = cell.value.strftime('%Y')
@@ -242,53 +239,61 @@ def Import(): #批量导入功能的的主函数
 
 def elecAccountImport(index): #导入电费时的网页操作函数
     file = checkData()
-    element = browser.find_element_by_xpath("/html/body/div[1]/button[4]")
+    #element = browser.find_element_by_xpath("/html/body/div[1]/button[4]")
+    element = browser.find_element(By.XPATH,"/html/body/div[1]/button[4]")
     ActionChains(browser).move_to_element(element).perform()
     element.click()
     time.sleep(0.5)
 
     # 定位上传按钮，添加本地文件
-    browser.find_element_by_xpath("/html/body/div[4]/div/div/div[2]/form/div/div/input[1]").send_keys(path+"非平峰谷电费缴费导入模板(软件用).xlsx")
+    #browser.find_element_by_xpath("/html/body/div[4]/div/div/div[2]/form/div/div/input[1]").send_keys(path+"非平峰谷电费缴费导入模板(软件用).xlsx")
+    browser.find_element(By.XPATH,"/html/body/div[4]/div/div/div[2]/form/div/div/input[1]").send_keys(path + "非平峰谷电费缴费导入模板(软件用).xlsx")
     time.sleep(0.5) #上传模板
-
-    f1 = browser.find_element_by_xpath("/html/body/div[4]/div/div/div[2]/div/ul[1]/li/div[2]/a")
+    f1 = browser.find_element(By.XPATH,"/html/body/div[4]/div/div/div[2]/div/ul[1]/li/div[2]/a")
     UpLoad_File(f1,file) #非input标签上传文件 #上传附件
     time.sleep(0.5)
-    element = browser.find_element_by_xpath("/html/body/div[7]/div/div/div[3]/a")
-    ActionChains(browser).move_to_element(element).perform()
-    element.click()
-    time.sleep(0.5)
+    try:#某些时候上传文件后不会出现确认框 这段使用try
+        element = browser.find_element(By.XPATH,"/html/body/div[7]/div/div/div[3]/a")  # / html / body / div[4] / div / div / div[3] / a[2]
+        ActionChains(browser).move_to_element(element).perform()  # 这里有问题# /html/body/div[4]/div/div/div[3]/a[2]
+        element.click()
+        time.sleep(0.5)
+    except:
+        pass
+
     if int(period) <= 201901:
-        f1 = browser.find_element_by_xpath("/html/body/div[4]/div/div/div[2]/div/ul[1]/li/div[2]/a")
+        f1 = browser.find_element(By.XPATH,"/html/body/div[4]/div/div/div[2]/div/ul[1]/li/div[2]/a")
         UpLoad_File(f1, billPath)  # 非input标签上传文件 #上传附件
         time.sleep(1)
-        element = browser.find_element_by_xpath("/html/body/div[7]/div/div/div[3]/a")
+        element = browser.find_element(By.XPATH,"/html/body/div[7]/div/div/div[3]/a")
         ActionChains(browser).move_to_element(element).perform()
         element.click()
         time.sleep(1)
-    element = browser.find_element_by_xpath("/html/body/div[4]/div/div/div[3]/a[2]")
+    element = browser.find_element(By.XPATH,"/html/body/div[4]/div/div/div[3]/a[2]")
     ActionChains(browser).move_to_element(element).perform()
     element.click()
     time.sleep(0.2)
 
     while 1:
         try:
-            text = browser.find_element_by_xpath("/html/body/div[" + str(index) + "]/div/div/div[2]").text
+            text = browser.find_element(By.XPATH,"/html/body/div[" + str(index) + "]/div/div/div[2]/p[1]").text
             print(text)
+            if text=="总共1条。成功0条，失败1条(其中校验不通过1条)。":
+                error = text
             break
         except:
             continue #检测导入完成的功能呢
 
-    element = browser.find_element_by_xpath("/html/body/div[" + str(index) + "]/div/div/div[3]/button")
+    element = browser.find_element(By.XPATH,"/html/body/div[" + str(index) + "]/div/div/div[3]/button")
     ActionChains(browser).move_to_element(element).perform()
     element.click() #导入完成后点击完成按钮
     print(index-9+1)
 
 def readConfig():
-    global path,letterPath,userName1,user1,password1,userName2,user2,password2
+    global path,letterPath,toolName,userName1,user1,password1,userName2,user2,password2
     config = get_yaml_data('config.yaml')
     path = config['path']
     letterPath = config['letterPath']
+    toolName = config['toolName']
 
     userName1 = config['userName1']
     user1 = config['user1']
@@ -309,7 +314,7 @@ def benchmark():
     browser.execute_script(js)
     time.sleep(0.5)
     page = browser.window_handles
-    browser.switch_to_window(page[1])  # 切换至明细页面
+    browser.switch_to.window(page[1])  # 切换至明细页面
     time.sleep(1)
     flag = input("请调整好爬取的页面,按1继续\n>>>");
     if flag == "1":
@@ -384,7 +389,7 @@ def histoicFlowTime():
     browser.execute_script(js)
     time.sleep(0.5)
     page = browser.window_handles
-    browser.switch_to_window(page[1])  # 切换至明细页面
+    browser.switch_to.window(page[1])  # 切换至明细页面
     time.sleep(1)
     user = input("请调整好爬取的页面,按1继续\n>>>");
     if user == "1":
@@ -445,7 +450,7 @@ def BillaccountPaymentInfo():
         'pageNumber': '1',  # 页码 (暂时没找到获取有多少页的接口)
         'pageSize': '10',  # 每页显示多少条记录 (10 25 50 100 500)
         'billaccountCode': '',  # 报账点编码
-        'billaccountName': '',  # 报账点名称
+        'billaccountName': '湛江徐闻县南山龙兴南一楼机房无线1',  # 报账点名称
         'paymentCode': '',  # 缴费单编码
         'pregId': '',  # 地市 湛江=36b7ee0a05d04884b332effa938fc682 此字符串采用MD5加密需要暴力穷举解密
         'regId': '',
@@ -544,6 +549,8 @@ if __name__ == '__main__':
     except:
         browser.get(url)
     # 再次访问页面，便可实现免登陆访问
+    value=listCookies[0]
+    print(value['value'])
     while 1:
         print("(1) - 直供电电费导入(在出账工具出账后使用)")
         print("(2) - 登录,获取cookie")
@@ -561,9 +568,9 @@ if __name__ == '__main__':
             js = "window.open('http://10.217.240.219:8090/NCMS/asserts/tpl/selfelec/payment_finance/record.html')"
             browser.execute_script(js)
             page = browser.window_handles
-            browser.switch_to_window(page[1])  # 切换至缴费页面
+            browser.switch_to.window(page[1])  # 切换至缴费页面
             try:
-                tool = load_workbook(path+"三家运营商代垫电费出账工具V35V1-20200818.xlsm")
+                tool = load_workbook(path+toolName)
                 template = load_workbook(path+"非平峰谷电费缴费导入模板(软件用).xlsx")
                 toolSheet = tool['新版导入表']
                 templateSheet = template['非平峰谷']
@@ -574,6 +581,7 @@ if __name__ == '__main__':
             template.close()
             print("导入完成!")
             browser.close()
+            browser.switch_to.window(page[0])
         if userInput == "2":
             chooseUser = input(userName1+"-(1) "+userName2+"-(2) 返回-(0)\n")
             print("有10秒的时间输入验证码,输入后不要操作任何按钮,10秒后自动登录")
@@ -589,59 +597,39 @@ if __name__ == '__main__':
             with open('cookies.json', 'w') as f:
                 f.write(jsonCookies)
             print("已获取cookie 请重启程序...")
+            browser.close()
             sys.exit()
         if userInput == "3":
-            js = "window.open('http://10.217.240.219:8090/NCMS/asserts/tpl/selfelec/billaccount/manage.html')"
-            browser.execute_script(js)
-            time.sleep(0.5)
-            page = browser.window_handles
-            browser.switch_to_window(page[1])  # 切换至缴费页面
-
-            xlsx= load_workbook("报账点.xlsx")
-
+            xlsx= load_workbook(path+"报账点.xlsx")
             Sheet = xlsx['Sheet1']
-
             col = Sheet['A']
-
-            time.sleep(5)
-
+            url1 = "http://10.217.240.219:8090/NCMS/asserts/tpl/selfelec/billaccount/updateBillaccountState"  # 接口地址
             i = 0
+            flag = input("输入数字选择启用或停用( 启用-0 停用-9 )\n>>>");
             for cell in col:
                 i += 1
                 point=cell.value
-                print(point)
-
-                browser.find_element_by_xpath("/html/body/form/div[1]/input").clear()
-
-                browser.find_element_by_xpath("/html/body/form/div[1]/input").send_keys(point)
-
-                element = browser.find_element_by_xpath("/html/body/form/button")
-                ActionChains(browser).move_to_element(element).perform()
-                element.click()
-                time.sleep(8)
-
-                element = browser.find_element_by_xpath("/html/body/div[3]/div[2]/div[2]/table/tbody/tr/td[1]/input")
-                ActionChains(browser).move_to_element(element).perform()
-                element.click()
-                time.sleep(1)
-
-                element = browser.find_element_by_xpath("/html/body/div[2]/button[6]")
-                ActionChains(browser).move_to_element(element).perform()
-                element.click()
-                time.sleep(1)
-
-                element = browser.find_element_by_xpath("/html/body/div[7]/div/div/div[2]/div[1]/input")
-                ActionChains(browser).move_to_element(element).perform()
-                element.click()
-                time.sleep(1)
-
-                element = browser.find_element_by_xpath("/html/body/div[7]/div/div/div[3]/button[2]")
-                ActionChains(browser).move_to_element(element).perform()
-                element.click()
-                time.sleep(6)
-                win32api.mouse_event(win32con.MOUSEEVENTF_MOVE | win32con.MOUSEEVENTF_ABSOLUTE, 32768, 32768, 0, 0)
-                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+                headers = {
+                    'Connection': 'keep-alive',
+                    'Content-Length': '69',
+                    'Accept': 'application/json, text/javascript, */*; q=0.01',
+                    'DNT': '1',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36',
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'Origin': 'http://10.217.240.219:8090',
+                    'Referer': 'http://10.217.240.219:8090/NCMS/asserts/tpl/selfelec/billaccount/manage.html',
+                    'Accept-Encoding': 'gzip, deflate',
+                    'Accept-Language': 'zh-CN,zh;q=0.9',
+                    'Cookie': 'SESSION='+value['value']+'; /NCMS/welcomecuNum=3',
+                }
+                # 消息数据
+                data = {'billaccountIdList':point,
+                        'billaccountState':flag,
+                        }
+                r = requests.post(url1, headers=headers, data=data, verify=False)  # 发送POST请求标杆
+                packet = r.json()  # 获取回复
+                print(packet)
         if userInput == "4":
             billNo = input("输入供电用户号>>>");
             xlsx1 = load_workbook(path + "东海区域2020年6月直供电电子版清单.xlsx")
@@ -670,8 +658,40 @@ if __name__ == '__main__':
             BillaccountPaymentInfo()
         if userInput == '8':
             ElectricmeterInfoDetail()
+        if userInput == '9':
+            js = "window.open('http://10.217.240.219:8090/NCMS/asserts/tpl/selfelec/billaccount/manage.html')"
+            browser.execute_script(js)
+            page = browser.window_handles
+            browser.switch_to.window(page[1])  # 切换至缴费页面
+            xlsx = load_workbook(path+"报账点.xlsx")
+            Sheet = xlsx['Sheet1']
+            col = Sheet['A']
+            time.sleep(5)
+            i = 0
+            for cell in col:
+                i += 1
+                point = cell.value
+                print(point)
+                browser.find_element(By.XPATH, "/html/body/form/div[1]/input").clear()
+                browser.find_element(By.XPATH, "/html/body/form/div[1]/input").send_keys(point)
+                element = browser.find_element(By.XPATH, "/html/body/form/button")
+                ActionChains(browser).move_to_element(element).perform()
+                element.click()
+                time.sleep(5)
+                j = 1
+                for text in browser.find_elements(By.XPATH, "//tbody//*[@onclick]"):
+                    accountId = text.get_attribute('onclick')
+                    if j == 2:
+                        accountId = accountId[12:]
+                        accountId = accountId[:32]
+                        #Sheet[str(get_column_letter(i))+str(i)].value=accountId
+                        Sheet['B' + str(i)].value = accountId
+                        print(accountId)
+                    j += 1
+            xlsx.save(path + "报账点.xlsx")
+            browser.close()
+            browser.switch_to.window(page[0])
         if userInput == "V" or userInput == "v":
             print(version)
-    browser.switch_to_window(page[0])
     browser.close()
     sys.exit(0)
