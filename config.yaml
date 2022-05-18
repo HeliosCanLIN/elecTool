@@ -4,16 +4,65 @@
 #附件需要存在path参数文件夹下的"缴费所需资料"内
 #一个标准的缴费文件夹结构
 #   \*path*\内有软件用导入模板,报账点信息
-path :  #缴费资料的文件夹的路径需要在路径后面加一个\号 eg:E:\Work\
-letterPath :  #分摊比例函文件 eg:E:\Work\0759\QT-004-关于商请湛江移动确认共享基站2020年7月电费分摊比例的函.zip
-toolName : 
 
-#1号用户
+# 各种链接，引用时需要前面加”http://“
+query_url : 10.217.240.219:8087/NCMS-TELE/asserts/tpl/tele/payment/query.html
+
+
+# 用户1
 userName1 : 
 user1 : 
 password1 : 
 
-#2号用户
+# 用户2
 userName2 : 
 user2 : 
 password2 : 
+
+# 导入表
+importName : 非平峰谷电费缴费导入模板.xlsx
+importPath : d:\Documents\Zhanjindi_BaiduNetdisk同步\移动自助录单工具\Input\
+importSheet : 非平峰谷
+
+# 导入表生成工具
+toolName : 三家运营商代垫电费出账工具V36V1.xlsx
+toolPath : d:\Documents\Zhanjindi_BaiduNetdisk同步\移动自助录单工具\Tool\
+toolSheet : 新版导入表
+listSheet : 台账清单
+
+# 导出文件存放路径
+outPath : d:\Documents\Zhanjindi_BaiduNetdisk同步\移动自助录单工具\Output\
+
+# 附件存放位置
+attachmentPath : d:\Documents\Zhanjindi_BaiduNetdisk同步\杂七杂八\
+
+# 提单清单
+submitName : 提交功能提单清单.xlsx
+submitPath : d:\Documents\Zhanjindi_BaiduNetdisk同步\移动自助录单工具\Tool\
+submitSheet : 筛选条件
+submitList : 提交清单
+
+# 超标单提单清单
+oversubmitName : 超标单提交功能提单清单.xlsx
+oversubmitPath : d:\Documents\Zhanjindi_BaiduNetdisk同步\移动自助录单工具\Tool\
+oversubmitList : 提交清单
+
+# 直供电同环比清单
+benchmarkName : 直供电同环比数据-V1.xlsm
+benchmarkPath : C:\Users\Bynkah\移动同环比超标生成工具Python版\Tool\
+benchmarkList : 清单
+benchmarkSheet : 筛选条件
+
+# 超标报告保存位置
+savePath : C:\Users\Bynkah\移动同环比超标生成工具Python版\Output\
+StName : SM-001-
+docPath : C:\Users\Bynkah\移动同环比超标生成工具Python版\Tool\
+docNameH : 关于直供电环比超标的说明.docx
+docNameT : 关于直供电同比超标的说明.docx
+docNameTH : 关于直供电同环比超标的说明.docx
+
+# 扫描件存放位置
+pdf_path : C:/Users/Bynkah/移动同环比超标生成工具Python版/超标报账扫描件
+newNamePath : C:/Users/Bynkah/移动同环比超标生成工具Python版/超标报账扫描件
+img_path : C:\Users\Bynkah\移动同环比超标生成工具Python版\PDF\img.png
+main_pdf : C:\Users\Bynkah\移动同环比超标生成工具Python版\PDF\主页面.pdf
