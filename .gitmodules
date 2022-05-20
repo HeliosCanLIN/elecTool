@@ -1,0 +1,3 @@
+[submodule "Src/GetBenchmark"]
+	path = Src/GetBenchmark
+	url = https://github.com/HeliosCanLIN/GetBenchmark.git
